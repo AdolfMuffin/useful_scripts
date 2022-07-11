@@ -16,5 +16,5 @@ do
     (( i++ ))
 done
 
-paste ./users ./counter
+paste ./users ./counter | column -t
 rm -f ./users ./counter
