@@ -11,3 +11,6 @@
 
 ## zabbix_cdp_integration
 Вывод в Zabbix данных, получаемых по протоколу CDP на сетевом оборудовании.
+
+##truenas_raid_monitoring
+Мониторинг состояния дисков через SSH-проверки.
