@@ -1,6 +1,6 @@
 zabbix_export:
   version: '6.2'
-  date: '2022-11-02T11:04:24Z'
+  date: '2022-11-09T13:39:28Z'
   template_groups:
     -
       uuid: e960332b3f6c46a1956486d4f3f99fce
@@ -8,8 +8,8 @@ zabbix_export:
   templates:
     -
       uuid: 088ba3a58c6740dd82b65d9adbad5ab2
-      template: 'SSH TrueNAS RAID checks'
-      name: 'SSH TrueNAS RAID checks'
+      template: 'SSH storcli RAID checks'
+      name: 'SSH storcli RAID checks'
       groups:
         -
           name: 'Templates/Server hardware'
@@ -21,7 +21,7 @@ zabbix_export:
           key: 'ssh.run[raid.controller.temp]'
           delay: 20m
           units: °C
-          params: '/usr/local/sbin/storcli /c0 show all | grep "ROC temperature(Degree Celsius)" | tr -s " " | cut -d" " -f5'
+          params: '{$SUDO} {$STORCLI} /call show all | grep "ROC temperature(Degree Celsius)" | awk ''{ print $5 }'''
           username: '{$SSH_USER}'
           password: '{$SSH_PW}'
           tags:
@@ -35,7 +35,7 @@ zabbix_export:
           type: SSH
           key: 'ssh.run[physical.disks.discovery]'
           delay: 1h
-          params: '{$SCRIPT_PATH} get_json_physical'
+          params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_json_physical'
           username: '{$SSH_USER}'
           password: '{$SSH_PW}'
           lifetime: 10d
@@ -48,7 +48,7 @@ zabbix_export:
               delay: 20m
               trends: '0'
               value_type: TEXT
-              params: '{$SCRIPT_PATH} get_status_physical {#DISKID}'
+              params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_status_physical "{#DISKID}"'
               username: '{$SSH_USER}'
               password: '{$SSH_PW}'
               tags:
@@ -58,7 +58,7 @@ zabbix_export:
               trigger_prototypes:
                 -
                   uuid: e4053c8ee58344aab5e74757e03b500e
-                  expression: 'change(/SSH TrueNAS RAID checks/ssh.run[disk.state.{#DISKID}])<>0'
+                  expression: 'change(/SSH storcli RAID checks/ssh.run[disk.state.{#DISKID}])<>0'
                   name: 'State of disk {#DISKID} has been changed'
                   priority: AVERAGE
             -
@@ -69,7 +69,7 @@ zabbix_export:
               delay: 20m
               trends: '0'
               value_type: TEXT
-              params: '{$SCRIPT_PATH} get_smart_physical {#DISKID}'
+              params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_smart_physical "{#DISKID}"'
               username: '{$SSH_USER}'
               password: '{$SSH_PW}'
               tags:
@@ -79,7 +79,7 @@ zabbix_export:
               trigger_prototypes:
                 -
                   uuid: ad10dbfeb2b848b488fefa421f24460b
-                  expression: 'last(/SSH TrueNAS RAID checks/ssh.run[smart.flag.{#DISKID}])<>"No"'
+                  expression: 'last(/SSH storcli RAID checks/ssh.run[smart.flag.{#DISKID}])<>"No"'
                   name: 'S.M.A.R.T. on disk {#DISKID} reported a problem'
                   priority: AVERAGE
         -
@@ -88,7 +88,7 @@ zabbix_export:
           type: SSH
           key: 'ssh.run[virtual.disks.discovery]'
           delay: 1h
-          params: '{$SCRIPT_PATH} get_json_virtual'
+          params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_json_virtual'
           username: '{$SSH_USER}'
           password: '{$SSH_PW}'
           lifetime: 10d
@@ -101,7 +101,7 @@ zabbix_export:
               delay: 20m
               trends: '0'
               value_type: TEXT
-              params: '{$SCRIPT_PATH} get_status_virtual {#VDISKID}'
+              params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_status_virtual "{#VDISKID}"'
               username: '{$SSH_USER}'
               password: '{$SSH_PW}'
               tags:
@@ -111,16 +111,23 @@ zabbix_export:
               trigger_prototypes:
                 -
                   uuid: 960a50ab87854fc6a7b37a0446c596db
-                  expression: 'last(/SSH TrueNAS RAID checks/ssh.run[vdisk.state.{#VDISKID}])<>"Optl"'
+                  expression: 'last(/SSH storcli RAID checks/ssh.run[vdisk.state.{#VDISKID}])<>"Optl"'
                   name: 'State of virtual disk {#DISKID} has been changed'
                   priority: AVERAGE
       macros:
         -
           macro: '{$SCRIPT_PATH}'
-          value: '<enter path to script>'
+          description: 'Absolute path to the script'
         -
           macro: '{$SSH_PW}'
-          value: '<enter password here>'
+          description: 'SSH password'
         -
           macro: '{$SSH_USER}'
-          value: '<enter username here>'
+          description: 'SSH username'
+        -
+          macro: '{$STORCLI}'
+          description: 'Absolute path to storcli utility'
+        -
+          macro: '{$SUDO}'
+          description: 'Enter "sudo" if sudo rights are required to execute storcli, otherway, leave blank'
+

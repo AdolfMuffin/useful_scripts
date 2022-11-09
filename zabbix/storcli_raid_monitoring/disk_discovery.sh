@@ -1,6 +1,6 @@
 #!/bin/sh
 
-storcli=<place storcli path here>
+storcli=$1
 i=0
 
 pdisk_count () {
@@ -56,23 +56,24 @@ create_json_virtual () {
     while [ $i -lt $vdisk_qty ]
             do
             virtual_disk_discovery
-            echo "{ "\"{#VDISKID}"\":"\"$vdisk_id"\","\"{#VDISKSTATE}"\":"\"$vdisk_state"\" },"
+            echo "{ "\"{#VDISKID}"\":"\"$vdisk_id"\", "\"{#VDISKSTATE}"\":"\"$vdisk_state"\" },"
             i=$((i+1))
             done
 
     while [ $i -eq $vdisk_qty ]
             do
             virtual_disk_discovery
-            echo "{ "\"{#VDISKID}"\":"\"$vdisk_id"\","\"{#VDISKSTATE}"\":"\"$vdisk_state"\" }"
+            echo "{ "\"{#VDISKID}"\":"\"$vdisk_id"\", "\"{#VDISKSTATE}"\":"\"$vdisk_state"\" }"
             i=$((i+1))
             done
     echo "]}"
 }
 
-case "$1" in
+case "$2" in
     "get_json_physical")create_json_physical;;
-    "get_status_physical")create_json_physical | jq '.data[]."{#DISKSTAT}"' | head -$(($2 + 1)) | tail -1 | sed 's/\"//g';;
-    "get_smart_physical")create_json_physical | jq '.data[]."{#SMARTSTATE}"' | head -$(($2 + 1)) | tail -1 | sed 's/\"//g';;
+    "get_status_physical")create_json_physical | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_smart_physical")create_json_physical | grep "$3"\" | awk '{ print $4 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
     "get_json_virtual")create_json_virtual;;
-    "get_status_virtual")create_json_virtual | jq '.data[]."{#VDISKSTATE}"' | head -$(($2 + 1)) | tail -1 | sed 's/\"//g';;
+    "get_status_virtual")create_json_virtual | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
 esac
+
