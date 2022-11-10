@@ -1,5 +1,11 @@
 #!/bin/sh
 
+if [ -d /storcli_cache ]; then
+    :> /dev/null
+else
+    mkdir /storcli_cache
+fi
+
 storcli=$1
 i=0
 
@@ -71,9 +77,10 @@ create_json_virtual () {
 
 case "$2" in
     "get_json_physical")create_json_physical;;
-    "get_status_physical")create_json_physical | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
-    "get_smart_physical")create_json_physical | grep "$3"\" | awk '{ print $4 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_status_physical")cat /ctorcli_cache/pdisk_cache.json | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_smart_physical")cat /ctorcli_cache/pdisk_cache.json | grep "$3"\" | awk '{ print $4 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
     "get_json_virtual")create_json_virtual;;
-    "get_status_virtual")create_json_virtual | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_status_virtual") cat /ctorcli_cache/vdisk_cache.json | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "make_cache_virtual")create_json_virtual > /storcli_cache/vdisk_cache.json;;
+    "make_cache_physical")create_json_physical > /storcli_cache/pdisk_cache.json;;
 esac
-
