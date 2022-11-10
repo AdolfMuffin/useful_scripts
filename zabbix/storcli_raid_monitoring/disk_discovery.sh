@@ -32,6 +32,9 @@ physical_disk_discovery () {
     smart_flag=$($storcli /call/eall/s$i show all | grep "S.M.A.R.T" | awk '{ print $7 }')
     disk_status=$($storcli /call/eall/s$i show | grep -E "(SATA|SAS)" | tail -1 | awk '{ print $3 }')
     pdisk_id=$($storcli /call/eall/s$i show | grep -E "(SATA|SAS)" | tail -1 | awk '{ print $1 }')
+    pdisk_model=$($storcli /call/eall/s$i show all | grep "Model Number =" | awk '{ print $4 }')
+    pdisk_temp=$($storcli /call/eall/s$i show all | grep "Temperature" | awk '{ print $4 }' | sed 's/C//g')
+    pdisk_errors=$($storcli /call/eall/s$1 show all | grep "Count " | awk '{ print $5 }' | awk '{s+=$1} END {print s}')
 }
 
 virtual_disk_discovery () {
@@ -40,7 +43,7 @@ virtual_disk_discovery () {
 }
 
 create_json_raid () {
-    controller_qty=$(($(/opt/lsi/storcli/storcli show ctrlcount | grep "Controller Count =" | awk '{ print $4 }')-1))
+    controller_qty=$(($($storcli show ctrlcount | grep "Controller Count =" | awk '{ print $4 }')-1))
     echo "{ "\"data"\":["
 
     while [ $i -lt $controller_qty ]
@@ -65,14 +68,14 @@ create_json_physical () {
     while [ $i -lt $pdisk_qty ]
             do
             physical_disk_discovery
-            echo "{ "\"{#DISKID}"\":"\"$pdisk_id"\", "\"{#DISKSTAT}"\":"\"$disk_status"\", "\"{#SMARTSTATE}"\":"\"$smart_flag"\" },"
+            echo "{ "\"{#DISKID}"\":"\"$pdisk_id"\", "\"{#DISKSTAT}"\":"\"$disk_status"\", "\"{#SMARTSTATE}"\":"\"$smart_flag"\", "\"{#DISKTEMP}"\":"\"$pdisk_temp"\", "\"{#MODEL}"\":"\"$pdisk_model"\", "\"{#ERRORQTY}"\":"\"$pdisk_errors"\" },"
             i=$((i+1))
             done
 
     while [ $i -eq $pdisk_qty ]
             do
             physical_disk_discovery
-            echo "{ "\"{#DISKID}"\":"\"$pdisk_id"\", "\"{#DISKSTAT}"\":"\"$disk_status"\", "\"{#SMARTSTATE}"\":"\"$smart_flag"\" }"
+            echo "{ "\"{#DISKID}"\":"\"$pdisk_id"\", "\"{#DISKSTAT}"\":"\"$disk_status"\", "\"{#SMARTSTATE}"\":"\"$smart_flag"\", "\"{#DISKTEMP}"\":"\"$pdisk_temp"\", "\"{#MODEL}"\":"\"$pdisk_model"\", "\"{#ERRORQTY}"\":"\"$pdisk_errors"\" }"
             i=$((i+1))
             done
 
@@ -99,12 +102,6 @@ create_json_virtual () {
     echo "]}"
 }
 
-make_cache () {
-    create_json_virtual > /tmp//storcli_cache/vdisk_cache.json
-    create_json_physical > /tmp//storcli_cache/pdisk_cache.json
-    create_json_raid > /tmp//storcli_cache/raid_cache.json
-}
-
 case "$2" in
     "get_json_physical") create_json_physical;;
     "get_json_raid") create_json_raid;;
@@ -112,13 +109,18 @@ case "$2" in
     ###
     "get_status_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
     "get_smart_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "$3"\" | awk '{ print $4 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_model_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "$3"\" | awk '{ print $6 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_temp_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "$3"\" | awk '{ print $5 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_errors_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "$3"\" | awk '{ print $7 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
     ###
     "get_status_virtual") cat /tmp/storcli_cache/vdisk_cache.json | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
     ###
     "get_controller_temp") cat /tmp/storcli_cache/raid_cache.json | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
-    "get_controller_stat") cat /tmp/storcli_cache/raid_cache.json | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
-    "get_battery_temp") cat /tmp/storcli_cache/raid_cache.json | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_controller_stat") cat /tmp/storcli_cache/raid_cache.json | grep "$3"\" | awk '{ print $4 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_battery_temp") cat /tmp/storcli_cache/raid_cache.json | grep "$3"\" | awk '{ print $5 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
     "get_battery_stat") cat /tmp/storcli_cache/raid_cache.json | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
     ###
-    "make_cache") make_cache;;
+    "make_cache_physical") create_json_physical > /tmp/storcli_cache/pdisk_cache.json;;
+    "make_cache_virtual") create_json_virtual > /tmp/storcli_cache/vdisk_cache.json;;
+    "make_cache_raid") create_json_raid > /tmp/storcli_cache/raid_cache.json;;
 esac
