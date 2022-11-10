@@ -1,6 +1,6 @@
 zabbix_export:
   version: '6.2'
-  date: '2022-11-09T13:39:28Z'
+  date: '2022-11-10T09:50:27Z'
   template_groups:
     -
       uuid: e960332b3f6c46a1956486d4f3f99fce
@@ -62,6 +62,22 @@ zabbix_export:
                   name: 'State of disk {#DISKID} has been changed'
                   priority: AVERAGE
             -
+              uuid: 815e1ad3d4b54c43af1f2715d670b842
+              name: 'Make physical disk cache'
+              type: SSH
+              key: 'ssh.run[pdisk.makecache]'
+              delay: 15m
+              history: '0'
+              trends: '0'
+              value_type: TEXT
+              params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" make_cache_physical'
+              username: '{$SSH_USER}'
+              password: '{$SSH_PW}'
+              tags:
+                -
+                  tag: Type
+                  value: 'Physical disk'
+            -
               uuid: 5c31e5d75ec241e697b4c4329d16ef37
               name: 'S.M.A.R.T. flag state for disk {#DISKID}'
               type: SSH
@@ -93,6 +109,22 @@ zabbix_export:
           password: '{$SSH_PW}'
           lifetime: 10d
           item_prototypes:
+            -
+              uuid: 1fadb90f0d6848ed8dcc82fc108a94dc
+              name: 'Make virtual disk cache'
+              type: SSH
+              key: 'ssh.run[vdisk.maskecache]'
+              delay: 15m
+              history: '0'
+              trends: '0'
+              value_type: TEXT
+              params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" make_cache_virtual'
+              username: '{$SSH_USER}'
+              password: '{$SSH_PW}'
+              tags:
+                -
+                  tag: Type
+                  value: 'Virtual disk'
             -
               uuid: 96f2008d57454aa0be4be6cf0819479b
               name: 'State of virtual disk {#VDISKID}'
@@ -130,4 +162,3 @@ zabbix_export:
         -
           macro: '{$SUDO}'
           description: 'Enter "sudo" if sudo rights are required to execute storcli, otherway, leave blank'
-
