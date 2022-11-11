@@ -16,18 +16,6 @@ raid_controller_discovery () {
     battery_stat=$($storcli /c$i/cv show | grep CVP | awk '{ print $2 }')
 }
 
-pdisk_count () {
-    table_start_line=$($storcli /call/eall/sall show | grep -n "EID:Slt" | awk -F":" '{ print $1 }')
-    table_end_line=$($storcli /call/eall/sall show | tail -n +$table_start_line | grep -n -- "----" | tail -1 | awk -F":" '{ print $1 }')
-    pdisk_qty=$(($($storcli /call/eall/sall show | tail -n +$table_start_line | head -$table_end_line | awk '{ print $1 }' | grep -n -- "----" | tail -1 | awk -F":" '{print $1}')-4))
-}
-
-vdisk_count () {
-    table_start_line=$($storcli /call/vall show | grep -n "DG/VD" | awk -F":" '{ print $1 }')
-    table_end_line=$($storcli /call/vall show | tail -n +$table_start_line | grep -n -- "----" | tail -1 | awk -F":" '{ print $1 }')
-    vdisk_qty=$(($($storcli /call/vall show | tail -n +$table_start_line | head -$table_end_line | awk '{ print $1 }' | grep -n -- "----" | tail -1 | awk -F":" '{print $1}')-4))
-}
-
 physical_disk_discovery () {
     smart_flag=$($storcli /call/eall/s$i show all | grep "S.M.A.R.T" | awk '{ print $7 }')
     disk_status=$($storcli /call/eall/s$i show | grep -E "(SATA|SAS)" | tail -1 | awk '{ print $3 }')
@@ -62,7 +50,7 @@ create_json_raid () {
     echo "]}"
 }
 create_json_physical () {
-    pdisk_count
+    pdisk_qty=$(($(/call/dall show all | grep "Total Drive Count =" | awk '{ print $5 }')-1))
     echo "{ "\"data"\":["
 
     while [ $i -lt $pdisk_qty ]
@@ -83,7 +71,7 @@ create_json_physical () {
 }
 
 create_json_virtual () {
-    vdisk_count
+    vdisk_qty=$(($(/call/dall show all | grep "Total VD Count =" | awk '{ print $5 }')))
     echo "{ "\"data"\":["
 
     while [ $i -lt $vdisk_qty ]
