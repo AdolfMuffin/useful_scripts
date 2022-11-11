@@ -28,6 +28,9 @@ physical_disk_discovery () {
 virtual_disk_discovery () {
     vdisk_id=$($storcli /call/v$i show | grep RAID | tail -1 | awk '{ print $1 }')
     vdisk_state=$($storcli /call/v$i show | grep RAID | awk '{ print $3 }')
+    vdisk_raid_type=$($storcli /call/v$i show | grep RAID | awk '{ print $2 }')
+    vdisk_cache_type=$($storcli /call/v$i show | grep RAID | awk '{ print $6 }')
+    vdisk_size=$($storcli /call/v$i show | grep RAID | awk '{ print $9 $10 }')
 }
 
 create_json_raid () {
@@ -77,7 +80,7 @@ create_json_virtual () {
     while [ $i -lt $vdisk_qty ]
             do
             virtual_disk_discovery
-            echo "{ "\"{#VDISKID}"\":"\"$vdisk_id"\", "\"{#VDISKSTATE}"\":"\"$vdisk_state"\" },"
+            echo "{ "\"{#VDISKID}"\":"\"$vdisk_id"\", "\"{#VDISKSTATE}"\":"\"$vdisk_state"\", "\"{#VDISKRAID}"\":"\"$vdisk_raid_type"\", "\"{#VDISKCACHE}"\":"\"$vdisk_cache_type"\", "\"{#VDISKSIZE}"\":"\"$vdisk_size"\" },"
             i=$((i+1))
             done
 
@@ -102,6 +105,9 @@ case "$2" in
     "get_errors_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "$3"\" | awk '{ print $7 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
     ###
     "get_status_virtual") cat /tmp/storcli_cache/vdisk_cache.json | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_raid_virtual") cat /tmp/storcli_cache/vdisk_cache.json | grep "$3"\" | awk '{ print $4 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_cache_type_virtual") cat /tmp/storcli_cache/vdisk_cache.json | grep "$3"\" | awk '{ print $5 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_size_virtual") cat /tmp/storcli_cache/vdisk_cache.json | grep "$3"\" | awk '{ print $6 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
     ###
     "get_controller_temp") cat /tmp/storcli_cache/raid_cache.json | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
     "get_controller_stat") cat /tmp/storcli_cache/raid_cache.json | grep "$3"\" | awk '{ print $4 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
