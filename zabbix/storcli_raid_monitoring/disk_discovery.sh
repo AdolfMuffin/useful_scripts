@@ -22,7 +22,7 @@ physical_disk_discovery () {
     pdisk_id=$($storcli /call/eall/s$i show | grep -E "(SATA|SAS)" | tail -1 | awk '{ print $1 }')
     pdisk_model=$($storcli /call/eall/s$i show all | grep "Model Number =" | awk '{ print $4 }')
     pdisk_temp=$($storcli /call/eall/s$i show all | grep "Temperature" | awk '{ print $4 }' | sed 's/C//g')
-    pdisk_errors=$($storcli /call/eall/s$1 show all | grep "Count " | awk '{ print $5 }' | awk '{s+=$1} END {print s}')
+    pdisk_errors=$(($($storcli /call/eall/s$1 show all | grep "Count " | awk '{ print $5 }' | awk '{s+=$1} END {print s}')+1))
 }
 
 virtual_disk_discovery () {
@@ -53,7 +53,7 @@ create_json_raid () {
     echo "]}"
 }
 create_json_physical () {
-    pdisk_qty=$(($(/call/dall show all | grep "Total Drive Count =" | awk '{ print $5 }')-1))
+    pdisk_qty=$(($($storcli /call/dall show all | grep "Total Drive Count =" | awk '{ print $5 }')-1))
     echo "{ "\"data"\":["
 
     while [ $i -lt $pdisk_qty ]
@@ -74,7 +74,7 @@ create_json_physical () {
 }
 
 create_json_virtual () {
-    vdisk_qty=$(($(/call/dall show all | grep "Total VD Count =" | awk '{ print $5 }')))
+    vdisk_qty=$(($($storcli /call/dall show all | grep "Total VD Count =" | awk '{ print $5 }')-1))
     echo "{ "\"data"\":["
 
     while [ $i -lt $vdisk_qty ]
@@ -87,7 +87,7 @@ create_json_virtual () {
     while [ $i -eq $vdisk_qty ]
             do
             virtual_disk_discovery
-            echo "{ "\"{#VDISKID}"\":"\"$vdisk_id"\", "\"{#VDISKSTATE}"\":"\"$vdisk_state"\" }"
+            echo "{ "\"{#VDISKID}"\":"\"$vdisk_id"\", "\"{#VDISKSTATE}"\":"\"$vdisk_state"\", "\"{#VDISKRAID}"\":"\"$vdisk_raid_type"\", "\"{#VDISKCACHE}"\":"\"$vdisk_cache_type"\", "\"{#VDISKSIZE}"\":"\"$vdisk_size"\" }"
             i=$((i+1))
             done
     echo "]}"
