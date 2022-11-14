@@ -16,7 +16,7 @@ raid_controller_discovery () {
     if [ $battery_present="Failed" ]
     then
         battery_temp=0
-        battery_stat="not present"
+        battery_stat="not_present"
     else
         battery_temp=$($storcli /c$i/cv show | grep CVP | awk '{ print $3 }' | sed 's/C//g')
         battery_stat=$($storcli /c$i/cv show | grep CVP | awk '{ print $2 }')
@@ -41,7 +41,7 @@ virtual_disk_discovery () {
 }
 
 create_json_raid () {
-    controller_qty=$(($($storcli show ctrlcount | grep "Controller Count =" | awk '{ print $4 }')-1))
+    controller_qty=$(($($storcli show ctrlcount | grep "Controller Count =" | awk '{ print $4 }' | tail -1)-1))
     echo "{ "\"data"\":["
 
     while [ $i -lt $controller_qty ]
@@ -60,7 +60,7 @@ create_json_raid () {
     echo "]}"
 }
 create_json_physical () {
-    pdisk_qty=$(($($storcli /call/dall show all | grep "Total Drive Count =" | awk '{ print $5 }')-1))
+    pdisk_qty=$(($($storcli /call/dall show all | grep "Total Drive Count =" | awk '{ print $5 }' | tail -1)-1))
     echo "{ "\"data"\":["
 
     while [ $i -lt $pdisk_qty ]
@@ -81,7 +81,7 @@ create_json_physical () {
 }
 
 create_json_virtual () {
-    vdisk_qty=$(($($storcli /call/dall show all | grep "Total VD Count =" | awk '{ print $5 }')-1))
+    vdisk_qty=$(($($storcli /call/dall show all | grep "Total VD Count =" | awk '{ print $5 }' | tail -1)-1))
     echo "{ "\"data"\":["
 
     while [ $i -lt $vdisk_qty ]
@@ -105,21 +105,21 @@ case "$2" in
     "get_json_raid") create_json_raid;;
     "get_json_virtual") create_json_virtual;;
     ###
-    "get_status_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
-    "get_smart_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "$3"\" | awk '{ print $4 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
-    "get_model_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "$3"\" | awk '{ print $6 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
-    "get_temp_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "$3"\" | awk '{ print $5 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
-    "get_errors_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "$3"\" | awk '{ print $7 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_status_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "\"{#DISKID}"\":"$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_smart_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "\"{#DISKID}"\":"$3"\" | awk '{ print $4 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_model_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "\"{#DISKID}"\":"$3"\" | awk '{ print $6 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_temp_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "\"{#DISKID}"\":"$3"\" | awk '{ print $5 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_errors_physical") cat /tmp/storcli_cache/pdisk_cache.json | grep "\"{#DISKID}"\":"$3"\" | awk '{ print $7 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
     ###
-    "get_status_virtual") cat /tmp/storcli_cache/vdisk_cache.json | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
-    "get_raid_virtual") cat /tmp/storcli_cache/vdisk_cache.json | grep "$3"\" | awk '{ print $4 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
-    "get_cache_type_virtual") cat /tmp/storcli_cache/vdisk_cache.json | grep "$3"\" | awk '{ print $5 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
-    "get_size_virtual") cat /tmp/storcli_cache/vdisk_cache.json | grep "$3"\" | awk '{ print $6 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_status_virtual") cat /tmp/storcli_cache/vdisk_cache.json | grep "\"{#VDISKID}"\":"$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_raid_virtual") cat /tmp/storcli_cache/vdisk_cache.json | grep "\"{#VDISKID}"\":"$3"\" | awk '{ print $4 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_cache_type_virtual") cat /tmp/storcli_cache/vdisk_cache.json | grep "\"{#VDISKID}"\":"$3"\" | awk '{ print $5 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_size_virtual") cat /tmp/storcli_cache/vdisk_cache.json | grep "\"{#VDISKID}"\":"$3"\" | awk '{ print $6 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
     ###
-    "get_controller_temp") cat /tmp/storcli_cache/raid_cache.json | grep "$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
-    "get_controller_stat") cat /tmp/storcli_cache/raid_cache.json | grep "$3"\" | awk '{ print $4 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
-    "get_battery_temp") cat /tmp/storcli_cache/raid_cache.json | grep "$3"\" | awk '{ print $5 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
-    "get_battery_stat") cat /tmp/storcli_cache/raid_cache.json | grep "$3"\" | awk '{ print $6 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_controller_temp") cat /tmp/storcli_cache/raid_cache.json | grep "\"{#CONTROLLERID}"\":"\"$3"\" | awk '{ print $3 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_controller_stat") cat /tmp/storcli_cache/raid_cache.json | grep "\"{#CONTROLLERID}"\":"\"$3"\" | awk '{ print $4 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_battery_temp") cat /tmp/storcli_cache/raid_cache.json | grep "\"{#CONTROLLERID}"\":"\"$3"\" | awk '{ print $5 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
+    "get_battery_stat") cat /tmp/storcli_cache/raid_cache.json | grep "\"{#CONTROLLERID}"\":"\"$3"\" | awk '{ print $6 }' | sed 's/\"//g' | awk -F":" '{ print $2 }' | sed 's/,//g';;
     ###
     "make_cache_physical") create_json_physical > /tmp/storcli_cache/pdisk_cache.json;;
     "make_cache_virtual") create_json_virtual > /tmp/storcli_cache/vdisk_cache.json;;

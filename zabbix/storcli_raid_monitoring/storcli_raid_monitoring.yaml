@@ -1,6 +1,6 @@
 zabbix_export:
   version: '6.2'
-  date: '2022-11-11T11:38:42Z'
+  date: '2022-11-14T13:37:39Z'
   template_groups:
     -
       uuid: e960332b3f6c46a1956486d4f3f99fce
@@ -10,15 +10,25 @@ zabbix_export:
       uuid: 088ba3a58c6740dd82b65d9adbad5ab2
       template: 'SSH storcli RAID checks'
       name: 'SSH storcli RAID checks'
+      description: 'https://github.com/AdolfMuffin/useful_scripts/tree/main/zabbix/storcli_raid_monitoring'
       groups:
         -
           name: 'Templates/Server hardware'
       items:
         -
+          uuid: 685ed8b179fe4e308b4bd8fb9ee8fc5b
+          name: 'Copy script to remote host'
+          type: EXTERNAL
+          key: 'scp_to_esxi.sh[{HOST.IP}, "{$SSH_USER}", "{$SSH_PW}", "{$LOCAL_PATH}"]'
+          delay: 12h
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+        -
           uuid: ad904c63579b4fd895653ed6430c9b94
           name: 'Make cache'
           type: SSH
-          key: 'ssh.run[vdisk.maskecache]'
+          key: 'ssh.run[vdisk.makecache]'
           delay: 10m
           history: '0'
           trends: '0'
@@ -152,180 +162,3 @@ zabbix_export:
           key: 'ssh.run[raid.controller.discovery]'
           delay: 1d
           params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_json_raid'
-          username: '{$SSH_USER}'
-          password: '{$SSH_PW}'
-          lifetime: 10d
-          item_prototypes:
-            -
-              uuid: 3176cc522b1742b7975a979c0bafa622
-              name: 'Status of battery on RAID controller {#CONTROLLERID}'
-              type: SSH
-              key: 'ssh.run[raid.controller.bat.status.{#CONTROLLERID}]'
-              delay: 20m
-              history: 30d
-              trends: '0'
-              value_type: TEXT
-              params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_battery_stat "{#CONTROLLERID}"'
-              username: '{$SSH_USER}'
-              password: '{$SSH_PW}'
-              tags:
-                -
-                  tag: Type
-                  value: RAID
-            -
-              uuid: d05c439e17534b7391a8588fb37ec63f
-              name: 'Temperature of battery on RAID controller {#CONTROLLERID}'
-              type: SSH
-              key: 'ssh.run[raid.controller.bat.temp.{#CONTROLLERID}]'
-              delay: 20m
-              history: 30d
-              trends: '0'
-              units: °C
-              params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_battery_temp "{#CONTROLLERID}"'
-              username: '{$SSH_USER}'
-              password: '{$SSH_PW}'
-              tags:
-                -
-                  tag: Type
-                  value: RAID
-              trigger_prototypes:
-                -
-                  uuid: b66080ec45da4f3bae58b563b3dbb052
-                  expression: 'last(/SSH storcli RAID checks/ssh.run[raid.controller.bat.temp.{#CONTROLLERID}])>50'
-                  name: 'Temperature of basttery on RAID controller {#CONTROLLERID} is too high'
-                  priority: AVERAGE
-            -
-              uuid: 1e5f7da89c4e497e893844f746581429
-              name: 'Status of RAID controller {#CONTROLLERID}'
-              type: SSH
-              key: 'ssh.run[raid.controller.status.{#CONTROLLERID}]'
-              delay: 20m
-              history: 30d
-              trends: '0'
-              value_type: TEXT
-              params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_controller_stat "{#CONTROLLERID}"'
-              username: '{$SSH_USER}'
-              password: '{$SSH_PW}'
-              tags:
-                -
-                  tag: Type
-                  value: RAID
-            -
-              uuid: 65774dbbe8c049e090c32e5a85c4dae9
-              name: 'Temperature of RAID controller {#CONTROLLERID}'
-              type: SSH
-              key: 'ssh.run[raid.controller.temp.{#CONTROLLERID}]'
-              delay: 20m
-              history: 30d
-              trends: '0'
-              units: °C
-              params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_controller_temp "{#CONTROLLERID}"'
-              username: '{$SSH_USER}'
-              password: '{$SSH_PW}'
-              tags:
-                -
-                  tag: Type
-                  value: RAID
-              trigger_prototypes:
-                -
-                  uuid: 5ec3a04bd7bc4714b2c2d0c3eeeb3866
-                  expression: 'last(/SSH storcli RAID checks/ssh.run[raid.controller.temp.{#CONTROLLERID}])>70'
-                  name: 'Temperature of RAID controller {#CONTROLLERID} is too high'
-                  priority: AVERAGE
-        -
-          uuid: 503ad7f2ccc649b0834447b77cd1e4f8
-          name: 'Virtual disks discovery'
-          type: SSH
-          key: 'ssh.run[virtual.disks.discovery]'
-          delay: 1d
-          params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_json_virtual'
-          username: '{$SSH_USER}'
-          password: '{$SSH_PW}'
-          lifetime: 10d
-          item_prototypes:
-            -
-              uuid: 448fc26450c543babe24b5d367d3e762
-              name: 'Cache type of virtual disk {#VDISKID}'
-              type: SSH
-              key: 'ssh.run[vdisk.cachetype.{#VDISKID}]'
-              delay: 20m
-              history: 30d
-              trends: '0'
-              value_type: TEXT
-              params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_cache_type_virtual "{#VDISKID}"'
-              username: '{$SSH_USER}'
-              password: '{$SSH_PW}'
-              tags:
-                -
-                  tag: Type
-                  value: 'Virtual disk'
-            -
-              uuid: d0ad7f1eca164db8914559c6184e07d4
-              name: 'RAID type of virtual disk {#VDISKID}'
-              type: SSH
-              key: 'ssh.run[vdisk.raidtype.{#VDISKID}]'
-              delay: 20m
-              history: 30d
-              trends: '0'
-              value_type: TEXT
-              params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_raid_virtual "{#VDISKID}"'
-              username: '{$SSH_USER}'
-              password: '{$SSH_PW}'
-              tags:
-                -
-                  tag: Type
-                  value: 'Virtual disk'
-            -
-              uuid: 32f1f04f35c84d08a851555bae83bd55
-              name: 'Size of virtual disk {#VDISKID}'
-              type: SSH
-              key: 'ssh.run[vdisk.size.{#VDISKID}]'
-              delay: 20m
-              history: 30d
-              trends: '0'
-              value_type: TEXT
-              params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_size_virtual "{#VDISKID}"'
-              username: '{$SSH_USER}'
-              password: '{$SSH_PW}'
-              tags:
-                -
-                  tag: Type
-                  value: 'Virtual disk'
-            -
-              uuid: 96f2008d57454aa0be4be6cf0819479b
-              name: 'State of virtual disk {#VDISKID}'
-              type: SSH
-              key: 'ssh.run[vdisk.state.{#VDISKID}]'
-              delay: 20m
-              history: 30d
-              trends: '0'
-              value_type: TEXT
-              params: '{$SUDO} {$SCRIPT_PATH} "{$STORCLI}" get_status_virtual "{#VDISKID}"'
-              username: '{$SSH_USER}'
-              password: '{$SSH_PW}'
-              tags:
-                -
-                  tag: Type
-                  value: 'Virtual disk'
-              trigger_prototypes:
-                -
-                  uuid: 960a50ab87854fc6a7b37a0446c596db
-                  expression: 'last(/SSH storcli RAID checks/ssh.run[vdisk.state.{#VDISKID}])<>"Optl"'
-                  name: 'State of virtual disk {#DISKID} has been changed'
-                  priority: AVERAGE
-      macros:
-        -
-          macro: '{$SCRIPT_PATH}'
-          description: 'Absolute path to the script'
-        -
-          macro: '{$SSH_PW}'
-          description: 'SSH password'
-        -
-          macro: '{$SSH_USER}'
-          description: 'SSH username'
-        -
-          macro: '{$STORCLI}'
-          description: 'Absolute path to storcli utility'
-        -
-          macro: '{$SUDO}'
-          description: 'Enter "sudo" if sudo rights are required to execute storcli, otherway, leave blank'
